@@ -1,4 +1,8 @@
 #include <zephyr/drivers/uart.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/kernel.h>
+
+LOG_MODULE_REGISTER(UART, LOG_LEVEL_DBG);
 
 const struct device *uart=DEVICE_DT_GET(DT_NODELABEL(uart0));
 
@@ -113,3 +117,5 @@ if (!device_is_ready(led0.port)){
 // if (ret) {
 //     return 1;
 // }
+
+k_msleep(500);
