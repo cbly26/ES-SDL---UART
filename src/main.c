@@ -1,12 +1,13 @@
 //Code from Nordic Developer Academy (Intel Corporation)
-/*#include <zephyr/kernel.h>
+#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/logging/log.h>
 
-
+LOG_REGISTER(SDL, LOG_LEVEL_DBG);
 #define SLEEP_TIME_MS 1000
 
 //Define the size of the receive buffer
@@ -16,8 +17,7 @@
 #define RECEIVE_TIMEOUT 100
 
 //Get the device pointers of the LEDs through gpio_dt_spec
-/* The nRF7002dk has only 2 LEDs so this step uses a compile-time condition to reflect the DK you
- * are building for */
+// The nRF7002dk has only 2 LEDs so this step uses a compile-time condition to reflect the DK you are building for
 #if defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP) ||                                              \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP_NS)
 static const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
@@ -57,6 +57,9 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 			}
 		}
 #else
+	LOG_DBG("ENTERED DATA REGISTER");
+	k_msleep(200);
+
 		if ((evt->data.rx.len) == 1) {
 
 			if (evt->data.rx.buf[evt->data.rx.offset] == '1') {
@@ -65,9 +68,9 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 				gpio_pin_toggle_dt(&led1);
 			} else if (evt->data.rx.buf[evt->data.rx.offset] == '3') {
 				gpio_pin_toggle_dt(&led2);
-			} /*else if (evt->data.rx.buf[evt->data.rx.offset] == '4') {
-				gpio_pin_toggle_dt(&led3);
-			}*/
+			} //else if (evt->data.rx.buf[evt->data.rx.offset] == '4') {
+				//gpio_pin_toggle_dt(&led3);
+			//}
 		}
 #endif
 		break;
@@ -118,10 +121,10 @@ int main(void)
 	if (ret < 0) {
 		return 1;
 	}
-	/*ret = gpio_pin_configure_dt(&led3, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		return 1;
-	}*/
+	// ret = gpio_pin_configure_dt(&led3, GPIO_OUTPUT_ACTIVE);
+	// if (ret < 0) {
+	// 	return 1;
+	// }
 #endif
 
 	//Register the UART callback function
@@ -143,15 +146,15 @@ int main(void)
 		k_msleep(SLEEP_TIME_MS);
 	}
 }
-*/
 
+/*
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(receive_board, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(SDL, LOG_LEVEL_DBG);
 
 #define UART_DEVICE_NODE DT_NODELABEL(uart0)
 #define LED0_NODE DT_ALIAS(led0)
@@ -318,3 +321,4 @@ int main(void)
         k_msleep(100); // Idle loop
     }
 }
+*/
