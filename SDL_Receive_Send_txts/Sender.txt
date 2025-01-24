@@ -1,0 +1,64 @@
+***** This file to be used by the sending microcontroller's computer ******
+
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/drivers/uart.h>
+
+#define SLEEP_TIME_MS 250
+
+//Define the size of the receive buffer
+#define RECEIVE_BUFF_SIZE 10
+
+//Define the receiving timeout period
+#define RECEIVE_TIMEOUT 100
+
+#define SEND_EVT BIT(0)
+K_EVENT_DEFINE(eventManager);
+
+static const struct gpio_dt_spec btn1 = GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios);
+const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
+static uint8_t tx_buf[10]; 
+void pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
+static struct gpio_callback interupt_cb_data;
+
+int main(void)
+{
+	int ret;  
+	//Verify that the UART device is ready
+	if (!device_is_ready(uart)) {
+		printk("UART device not ready\n");
+		return 1;
+	}
+	//Verify that the LED devices are ready 
+	if (!device_is_ready(btn1.port)) {
+		printk("GPIO device is not ready\n");
+		return 1;
+	}
+//Configure the GPIOs of the button
+	ret = gpio_pin_configure_dt(&btn1, GPIO_INPUT);
+	if (ret < 0) {
+		return 1;
+	}
+        gpio_init_callback(&interupt_cb_data, pressed, BIT(btn1.pin));
+        gpio_add_callback(btn1.port, &interupt_cb_data);
+        gpio_pin_interrupt_configure_dt(&btn1, GPIO_INT_EDGE_TO_ACTIVE);
+        while (true) {
+                k_event_wait(&eventManager, SEND_EVT, false, K_FOREVER);
+                k_event_clear(&eventManager, SEND_EVT);
+	        //Send the data over UART by calling uart_tx()
+                printk("%d", tx_buf[0]);
+	        ret = uart_tx(uart, tx_buf, sizeof(tx_buf), SYS_FOREVER_MS);
+	        if (ret) {
+		        return 1;
+	        }
+        }
+}
+void pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
+        tx_buf[0] = '1';
+        tx_buf[1] = '\r';
+        tx_buf[2] = '\n';
+        k_event_post(&eventManager, SEND_EVT);
+}
